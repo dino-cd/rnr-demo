@@ -4,7 +4,8 @@
 °added flagy. ( needs a revision )
 °added 20+ tiles. ( needs a revision )
 °optimization removed.
-°Added html support for csBubble ( needs a revision
+°Added html support for csBubble ( needs a revision )
+Autoscrolling, bulbs, shop, and preview for level 1 would be available soon.
 
 <font color="#00FF00"><b>for requesting stuff DM me on discord.</b></font>
 
