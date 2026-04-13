@@ -38,15 +38,20 @@
 </head>
 <body>
     <div id="ruffle-container"></div>
-    <div id="loading-overlay"></div> <script src="https://unpkg.com/@ruffle-rs/ruffle"></script>
+    <div id="loading-overlay"></div>
+
+    <script src="https://unpkg.com/@ruffle-rs/ruffle"></script>
     <script>
+
         const Engine = Matter.Engine,
               Render = Matter.Render,
               Runner = Matter.Runner,
               Bodies = Matter.Bodies,
               Composite = Matter.Composite;
+
         const engine = Engine.create();
         const overlay = document.getElementById("loading-overlay");
+
         const render = Render.create({
             element: overlay,
             engine: engine,
@@ -57,6 +62,7 @@
                 background: '#000'
             }
         });
+
         const ground = Bodies.rectangle(window.innerWidth / 2, window.innerHeight + 50, window.innerWidth + 200, 100, { isStatic: true });
         const leftWall = Bodies.rectangle(-50, window.innerHeight / 2, 100, window.innerHeight * 2, { isStatic: true });
         const rightWall = Bodies.rectangle(window.innerWidth + 50, window.innerHeight / 2, 100, window.innerHeight * 2, { isStatic: true });
@@ -65,51 +71,76 @@
         Render.run(render);
         const runner = Runner.create();
         Runner.run(runner, engine);
+
         const imageUrls = [
             "https://raw.githubusercontent.com/Zolo101/zelo.dev/master/src/lib/assets/5beam/box.webp",
             "https://raw.githubusercontent.com/Zolo101/zelo.dev/master/src/lib/assets/5beam/companion.webp",
             "https://raw.githubusercontent.com/Zolo101/zelo.dev/master/src/lib/assets/5beam/metal.webp",
             "https://raw.githubusercontent.com/Zolo101/zelo.dev/master/src/lib/assets/5beam/parcel.webp"
         ];
+
         function dropItem() {
+            if (!document.getElementById("loading-overlay")) return; 
+
             const randomX = Math.random() * (window.innerWidth - 100) + 50;
             const randomImage = imageUrls[Math.floor(Math.random() * imageUrls.length)];
-            const size = 80; 
-            const box = Bodies.rectangle(randomX, -100, size, size, {
+
+            const collisionSize = 50; 
+            const scaleFactor = 0.1; 
+
+            const box = Bodies.rectangle(randomX, -100, collisionSize, collisionSize, {
                 restitution: 0.5,
                 render: {
                     sprite: {
                         texture: randomImage,
-                        xScale: 1,
-                        yScale: 1
+                        xScale: scaleFactor,
+                        yScale: scaleFactor
                     }
                 }
             });
+
             Composite.add(engine.world, box);
         }
+
         const dropInterval = setInterval(dropItem, 150);
+
+        let hasCleanedUp = false;
+        function cleanupLoadingScreen() {
+            if (hasCleanedUp) return;
+            hasCleanedUp = true;
+
+            clearInterval(dropInterval);
+            Render.stop(render);
+            Runner.stop(runner);
+            Engine.clear(engine);
+
+            if (overlay) {
+                overlay.remove(); 
+
+            }
+        }
+
         window.RufflePlayer = window.RufflePlayer || {};  
         window.addEventListener("load", (event) => {
             const ruffle = window.RufflePlayer.newest();
             const player = ruffle.createPlayer();
             const container = document.getElementById("ruffle-container"); 
             container.appendChild(player);
+
+            player.addEventListener("loadeddata", cleanupLoadingScreen);
+
             player.load({
                 url: "messyl.swf",
                 letterbox: "on",
                 autoplay: "on",               
                 unmuteOverlay: "hidden"
             }).then(() => {
-                clearInterval(dropInterval);
-                Render.stop(render);
-                Runner.stop(runner);
-                Engine.clear(engine);
-                overlay.style.display = 'none';
-                overlay.innerHTML = ''; 
+                cleanupLoadingScreen(); 
+
             }).catch((err) => {
                 console.error("Error loading Ruffle:", err);
-                clearInterval(dropInterval);
-                overlay.style.display = 'none';
+                cleanupLoadingScreen(); 
+
             });
         });
     </script>
