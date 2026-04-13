@@ -24,12 +24,70 @@
             width: 100%;
             height: 100%;
         }
+        #loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 10;
+            background-color: #000;
+        }
     </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
 </head>
 <body>
     <div id="ruffle-container"></div>
-    <script src="https://unpkg.com/@ruffle-rs/ruffle"></script>
+    <div id="loading-overlay"></div> <script src="https://unpkg.com/@ruffle-rs/ruffle"></script>
     <script>
+        const Engine = Matter.Engine,
+              Render = Matter.Render,
+              Runner = Matter.Runner,
+              Bodies = Matter.Bodies,
+              Composite = Matter.Composite;
+        const engine = Engine.create();
+        const overlay = document.getElementById("loading-overlay");
+        const render = Render.create({
+            element: overlay,
+            engine: engine,
+            options: {
+                width: window.innerWidth,
+                height: window.innerHeight,
+                wireframes: false,
+                background: '#000'
+            }
+        });
+        const ground = Bodies.rectangle(window.innerWidth / 2, window.innerHeight + 50, window.innerWidth + 200, 100, { isStatic: true });
+        const leftWall = Bodies.rectangle(-50, window.innerHeight / 2, 100, window.innerHeight * 2, { isStatic: true });
+        const rightWall = Bodies.rectangle(window.innerWidth + 50, window.innerHeight / 2, 100, window.innerHeight * 2, { isStatic: true });
+        Composite.add(engine.world, [ground, leftWall, rightWall]);
+
+        Render.run(render);
+        const runner = Runner.create();
+        Runner.run(runner, engine);
+        const imageUrls = [
+            "https://raw.githubusercontent.com/Zolo101/zelo.dev/master/src/lib/assets/5beam/box.webp",
+            "https://raw.githubusercontent.com/Zolo101/zelo.dev/master/src/lib/assets/5beam/companion.webp",
+            "https://raw.githubusercontent.com/Zolo101/zelo.dev/master/src/lib/assets/5beam/metal.webp",
+            "https://raw.githubusercontent.com/Zolo101/zelo.dev/master/src/lib/assets/5beam/parcel.webp"
+        ];
+        function dropItem() {
+            const randomX = Math.random() * (window.innerWidth - 100) + 50;
+            const randomImage = imageUrls[Math.floor(Math.random() * imageUrls.length)];
+            const size = 80; 
+            const box = Bodies.rectangle(randomX, -100, size, size, {
+                restitution: 0.5,
+                render: {
+                    sprite: {
+                        texture: randomImage,
+                        xScale: 1,
+                        yScale: 1
+                    }
+                }
+            });
+            Composite.add(engine.world, box);
+        }
+        const dropInterval = setInterval(dropItem, 150);
         window.RufflePlayer = window.RufflePlayer || {};  
         window.addEventListener("load", (event) => {
             const ruffle = window.RufflePlayer.newest();
@@ -41,6 +99,17 @@
                 letterbox: "on",
                 autoplay: "on",               
                 unmuteOverlay: "hidden"
+            }).then(() => {
+                clearInterval(dropInterval);
+                Render.stop(render);
+                Runner.stop(runner);
+                Engine.clear(engine);
+                overlay.style.display = 'none';
+                overlay.innerHTML = ''; 
+            }).catch((err) => {
+                console.error("Error loading Ruffle:", err);
+                clearInterval(dropInterval);
+                overlay.style.display = 'none';
             });
         });
     </script>
