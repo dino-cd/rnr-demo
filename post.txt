@@ -7,6 +7,11 @@
 °Added html support for csBubble ( needs a revision )
 Autoscrolling, bulbs, shop, and preview for level 1 would be available soon.
 
+<p align="center"><b><font size="22" color="#FFFFFF">tutorial</font></b></p>
+
+Use c to activate ability.
+special ability like book and cappy require cursot to lock on target.
+
 <font color="#00FF00"><b>for requesting stuff DM me on discord.</b></font>
 
 <a href="https://dino-cd.github.io/rnr-demo/"><u><font color="#5865F2">play rnr.</font></u></a>
