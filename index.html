@@ -61,87 +61,91 @@
 
     <script src="https://unpkg.com/@ruffle-rs/ruffle"></script>
     <script>
+        let skipload = true; //!!!!!! skip the starty buttony
 
-        const Engine = Matter.Engine,
-              Render = Matter.Render,
-              Runner = Matter.Runner,
-              Bodies = Matter.Bodies,
-              Composite = Matter.Composite;
-
-        const engine = Engine.create();
         const overlay = document.getElementById("loading-overlay");
         const startBtn = document.getElementById("start-btn");
-
-        const render = Render.create({
-            element: overlay,
-            engine: engine,
-            options: {
-                width: window.innerWidth,
-                height: window.innerHeight,
-                wireframes: false,
-                background: '#000'
-            }
-        });
-
-        const ground = Bodies.rectangle(window.innerWidth / 2, window.innerHeight + 50, window.innerWidth + 200, 100, { isStatic: true });
-        const leftWall = Bodies.rectangle(-50, window.innerHeight / 2, 100, window.innerHeight * 2, { isStatic: true });
-        const rightWall = Bodies.rectangle(window.innerWidth + 50, window.innerHeight / 2, 100, window.innerHeight * 2, { isStatic: true });
-        Composite.add(engine.world, [ground, leftWall, rightWall]);
-
-        Render.run(render);
-        const runner = Runner.create();
-        Runner.run(runner, engine);
-
-        const imageUrls = [
-            "https://raw.githubusercontent.com/Zolo101/zelo.dev/master/src/lib/assets/5beam/box.webp",
-            "https://raw.githubusercontent.com/Zolo101/zelo.dev/master/src/lib/assets/5beam/companion.webp",
-            "https://raw.githubusercontent.com/Zolo101/zelo.dev/master/src/lib/assets/5beam/metal.webp",
-            "https://raw.githubusercontent.com/Zolo101/zelo.dev/master/src/lib/assets/5beam/parcel.webp"
-        ];
-
-        function dropItem() {
-            if (!document.getElementById("loading-overlay")) return; 
-
-            const randomX = Math.random() * (window.innerWidth - 100) + 50;
-            const randomImage = imageUrls[Math.floor(Math.random() * imageUrls.length)];
-
-            const collisionSize = 50; 
-            const scaleFactor = 0.1; 
-
-            const box = Bodies.rectangle(randomX, -100, collisionSize, collisionSize, {
-                restitution: 0.5,
-                render: {
-                    sprite: {
-                        texture: randomImage,
-                        xScale: scaleFactor,
-                        yScale: scaleFactor
-                    }
-                }
-            });
-
-            Composite.add(engine.world, box);
-        }
-
-        const dropInterval = setInterval(dropItem, 150);
-
+        let engine, render, runner, dropInterval;
         let hasCleanedUp = false;
+
         function cleanupLoadingScreen() {
             if (hasCleanedUp) return;
             hasCleanedUp = true;
 
-            clearInterval(dropInterval);
-            Render.stop(render);
-            Runner.stop(runner);
-            Engine.clear(engine);
+            if (dropInterval) clearInterval(dropInterval);
+            if (render) Matter.Render.stop(render);
+            if (runner) Matter.Runner.stop(runner);
+            if (engine) Matter.Engine.clear(engine);
 
             if (overlay) {
                 overlay.remove(); 
-
             }
         }
 
-        startBtn.addEventListener("click", cleanupLoadingScreen);
+        if (skipload) {
+            cleanupLoadingScreen();
+        } else {
+            const Engine = Matter.Engine,
+                  Render = Matter.Render,
+                  Runner = Matter.Runner,
+                  Bodies = Matter.Bodies,
+                  Composite = Matter.Composite;
 
+            engine = Engine.create();
+
+            render = Render.create({
+                element: overlay,
+                engine: engine,
+                options: {
+                    width: window.innerWidth,
+                    height: window.innerHeight,
+                    wireframes: false,
+                    background: '#000'
+                }
+            });
+
+            const ground = Bodies.rectangle(window.innerWidth / 2, window.innerHeight + 50, window.innerWidth + 200, 100, { isStatic: true });
+            const leftWall = Bodies.rectangle(-50, window.innerHeight / 2, 100, window.innerHeight * 2, { isStatic: true });
+            const rightWall = Bodies.rectangle(window.innerWidth + 50, window.innerHeight / 2, 100, window.innerHeight * 2, { isStatic: true });
+            Composite.add(engine.world, [ground, leftWall, rightWall]);
+
+            Render.run(render);
+            runner = Runner.create();
+            Runner.run(runner, engine);
+
+            const imageUrls = [
+                "https://raw.githubusercontent.com/Zolo101/zelo.dev/master/src/lib/assets/5beam/box.webp",
+                "https://raw.githubusercontent.com/Zolo101/zelo.dev/master/src/lib/assets/5beam/companion.webp",
+                "https://raw.githubusercontent.com/Zolo101/zelo.dev/master/src/lib/assets/5beam/metal.webp",
+                "https://raw.githubusercontent.com/Zolo101/zelo.dev/master/src/lib/assets/5beam/parcel.webp"
+            ];
+
+            function dropItem() {
+                if (!document.getElementById("loading-overlay")) return; 
+
+                const randomX = Math.random() * (window.innerWidth - 100) + 50;
+                const randomImage = imageUrls[Math.floor(Math.random() * imageUrls.length)];
+
+                const collisionSize = 50; 
+                const scaleFactor = 0.1; 
+
+                const box = Bodies.rectangle(randomX, -100, collisionSize, collisionSize, {
+                    restitution: 0.5,
+                    render: {
+                        sprite: {
+                            texture: randomImage,
+                            xScale: scaleFactor,
+                            yScale: scaleFactor
+                        }
+                    }
+                });
+
+                Composite.add(engine.world, box);
+            }
+
+            dropInterval = setInterval(dropItem, 150);
+            startBtn.addEventListener("click", cleanupLoadingScreen);
+        }
         window.RufflePlayer = window.RufflePlayer || {};  
         window.addEventListener("load", (event) => {
             const ruffle = window.RufflePlayer.newest();
@@ -150,7 +154,7 @@
             container.appendChild(player);
 
             function showStartButton() {
-                if (startBtn.style.display !== 'block') {
+                if (!skipload && startBtn && startBtn.style.display !== 'block') {
                     startBtn.style.display = 'block';
                 }
             }
@@ -164,11 +168,9 @@
                 unmuteOverlay: "hidden"
             }).then(() => {
                 showStartButton(); 
-
             }).catch((err) => {
                 console.error("Error loading Ruffle:", err);
                 cleanupLoadingScreen(); 
-
             });
         });
     </script>
